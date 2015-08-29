@@ -55,12 +55,12 @@ class dataLogger(object):
             print("Error: length of datum is %i, required length is %i."%(len(data[0]),len(self.details.vars)))
             return False
 
-##        try:
-        self.dv.add(data)
-##            return True
-##        except:
-##            print("Error: invalid data. It should be a list of lists, and each sublist should have a number of entries equal to <independents> + <dependents>.")
-##            return False
+        try:
+            self.dv.add(data)
+            return True
+        except:
+            print("Error: invalid data. It should be a list of lists, and each sublist should have a number of entries equal to <independents> + <dependents>. Unitless (int, float, etc) entries also required.")
+            return False
 
         return True
 
