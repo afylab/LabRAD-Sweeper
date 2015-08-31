@@ -175,6 +175,7 @@ class sweepInstance(gui.QMainWindow):
         self.comment_list    = []
         self.parameter_list  = []
         self.parameter_names = []
+        self.has_written     = False
 
         # dataset location (None = not set yet)
         self.dataset_location = None
@@ -300,7 +301,9 @@ class sweepInstance(gui.QMainWindow):
         # [!!!!] add ability to determine folder
         location = ['','experimental data','testing']
 
-
+        if self.has_written:
+            print("Error: data set has already been written. Note that comments and parameters can still be added.")
+            return False
 
         if not (self.status == 'completed'):
             print("Error: cannot log data until dataset is completed.")
@@ -342,9 +345,9 @@ class sweepInstance(gui.QMainWindow):
             except:
                 yunit = 'unitless'
             independents = [[xname,xunit],[yname,yunit]]
-            print(xunit,yunit)
+            #print(xunit,yunit)
             
-            dependents = [[setting.name,setting.name,setting.unit] for setting in self.setting_details]
+            dependents = [[setting.name,setting.unit] for setting in self.setting_details]
 
             
 
@@ -369,35 +372,44 @@ class sweepInstance(gui.QMainWindow):
                     )
         self.dataset_location = location[:]
         
-        print(data)
+        #print(data)
         
         #print independents + dependents
-        log.make_dataset(dataset_name,location,independents,add_legend(dependents))
+        self.dsnum = log.make_dataset(dataset_name,location,independents,add_legend(dependents))
         log.dump_data(data)
         if len(self.comment_list):
             log.add_comments(self.comment_list)
-            #print(self.comment_list)
             self.comment_list = []
         if len(self.parameter_list):
             log.add_parameters(self.parameter_list)
-            #print(conc_parameter_list(self.parameter_list))
             self.parameter_list = []
+        log.close_dataset()
+        self.has_written = True
+        
         
         
     def add_comments(self):
         commentbox = commentBoxWidget(self)
 
     def send_comments(self,comments):
-        self.comment_list += comments
-        print(self.comment_list)
+        if not self.has_written:
+            self.comment_list += comments
+        else:
+            global log
+            log.add_comments_to_file(self.dataset_location,self.dsnum,comments)
     
     def add_parameters(self):
         parameterbox = parameterBoxWidget(self,self.parameter_names)
 
     def send_parameters(self,parameters):
-        self.parameter_list += parameters
-        self.parameter_names += [param[0] for param in parameters]
-        print(self.parameter_list,self.parameter_names)
+        if not self.has_written:
+            self.parameter_list += parameters
+            self.parameter_names += [param[0] for param in parameters]
+        else:
+            global log
+            log.add_parameters_to_file(self.dataset_location,self.dsnum,parameters)
+            self.parameter_names += [param[0] for param in parameters]
+            
 
     def cust_map(self):
         self.dropdown_colormap.setCurrentIndex(1) # Custom
