@@ -887,13 +887,13 @@ class sweeperWidget(gui.QMainWindow):
         self.tabs.addTab(self.s1d,"1-D sweep")
         self.tabs.addTab(self.s2d,"2-D sweep")
 
-        #[!!!!] test label        #[!!!!] rot test
-        self.rl1 = rotText(self,"test #1",[128,128,128,23],0)
-        self.rl2 = rotText(self,"test #2",[128,128,23,128],90)
-        self.rl3 = rotText(self,"test #3",[128,128,23,128],-90)
-        self.tabs.addTab(self.rl1,'r1')
-        self.tabs.addTab(self.rl2,'r2')
-        self.tabs.addTab(self.rl3,'r3')
+##        #[!!!!] test label        #[!!!!] rot test
+##        self.rl1 = rotText(self,"test #1",[128,128,128,23],0)
+##        self.rl2 = rotText(self,"test #2",[128,128,23,128],90)
+##        self.rl3 = rotText(self,"test #3",[128,128,23,128],-90)
+##        self.tabs.addTab(self.rl1,'r1')
+##        self.tabs.addTab(self.rl2,'r2')
+##        self.tabs.addTab(self.rl3,'r3')
 
     def get_details(self,kind='1d'):
         if kind=='1d':
