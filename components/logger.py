@@ -32,16 +32,17 @@ class dataLogger(object):
         self.details = None
 
     def make_dataset(self,name,loc,indep,dep):
+        '''Creates a new data set, and returns the number of the set created.'''
         if self.active:
             print("Error: there is already an active dataset. Please wait until it finishes.")
             return False
 
         self.dv.cd(loc)
-        self.dv.new(name,indep,dep)
+        new = self.dv.new(name,indep,dep)
         self.details = datasetDetails(name,loc,indep,dep)
         self.active      = True
         self.active_type = 'write'
-        return True
+        return int(new[1].partition(' - ')[0])
 
     def dump_data(self,data):
         if not self.active:
@@ -126,7 +127,7 @@ class dataLogger(object):
 
         files_raw = self.dv.dir()[1]
         files     = [int(fraw.partition(' - ')[0]) for fraw in files_raw]
-        print(files)
+        #print(files)
         if not (num in files):
             print("Error: specified file does not exist in the specified location.")
             return False
@@ -160,7 +161,7 @@ class dataLogger(object):
 
         files_raw = self.dv.dir()[1]
         files     = [int(fraw.partition(' - ')[0]) for fraw in files_raw]
-        print(files)
+        #print(files)
         if not (num in files):
             print("Error: specified file does not exist in the specified location.")
             return False
