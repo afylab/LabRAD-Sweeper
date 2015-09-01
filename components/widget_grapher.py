@@ -40,6 +40,42 @@ class plotInstance(gui.QWidget):
         self.data = pg.PlotCurveItem(x=self.xdat,y=self.ydat)
         self.plot.addItem(self.data)
 
+class colorbar(gui.QWidget):
+    def __init__(self,parent,rect):
+        super(colorbar,self).__init__(parent)
+        self.parent = parent
+
+        self.data     = numpy.zeros(rect)
+        self.data[:,] = numpy.linspace(0,1,rect[1])
+
+        self.gl = pg.GraphicsLayoutWidget(parent)
+        self.gl.ci.setContentsMargins(0,0,0,0)
+        self.gl.setAspectLocked(True)
+
+        self.view = self.gl.addViewBox()
+        self.view.setMouseEnabled(False,False)
+        self.img  = pg.ImageItem(border='w')
+        self.view.addItem(self.img)
+        self.view.setRange(core.QRectF(0,0,rect[0],rect[1]),padding = 0)
+        self.img.setImage(self.data)
+        self.gl.setGeometry(0,0,rect[0],rect[1])
+
+class colorbarShell(gui.QWidget):
+    def __init__(self,parent,geometry):
+        super(colorbarShell,self).__init__(parent)
+        self.parent = parent
+
+        self.cbar = colorbar(self,geometry[2:])
+        self.setMinimumSize(geometry[2],geometry[3])
+        self.move(geometry[0],geometry[1])
+        self.resize(geometry[2],geometry[3])
+
+    def applyColorMap(self,colormap):
+        if not (colormap==None):
+            self.cbar.img.setLookupTable(colormap.getLookupTable(alpha=False))
+        else:
+            self.cbar.img.setLookupTable(None)
+
 class colorplotShell(gui.QWidget):
     def __init__(self,xlabel,ylabel,xnum,ynum,xrng,yrng,parent=None,geometry=None,ls=23,pl=320,bl=12,ll=128):
         super(colorplotShell,self).__init__(parent)
@@ -61,6 +97,9 @@ class colorplotShell(gui.QWidget):
         self.label_top = simpleText(self,"TOP",[ls+pl+bl*3,0                 ,ll,ls])
         self.label_mid = simpleText(self,"MID",[ls+pl+bl*3,int(pl//2 - ls//2),ll,ls])
         self.label_bot = simpleText(self,"BOT",[ls+pl+bl*3,pl-ls             ,ll,ls])
+
+        # color bar
+        self.cbar = colorbarShell(self,[ls+pl+bl,0,bl*2,pl])
 
         # axis labels
         ##self.label_x = rotText(self,str(xlabel),[self.ls+int(self.pl//2 - self.ll//2),self.pl,self.ll,self.ls],rot=0)
@@ -435,13 +474,18 @@ class sweepInstance(gui.QMainWindow):
         go = customMapWidget(self)
 
     def change_colormap(self):
+        map_ = None
         choice = str(self.dropdown_colormap.currentText())
         if choice == 'None':
             self.colormap = None
         elif choice == 'Custom':
             self.colormap = self.custom_map
+            map_ = self.custom_map
         else:
             self.colormap = maps[choice]
+            map_ = maps[choice]
+        for label in self.graphs.keys():
+            self.graphs[label].cbar.applyColorMap(map_)
         self.update_graphs()
 
     def add_data(self,x_datum=None,y_data=None,pos=None,yvalues=None):
@@ -710,13 +754,13 @@ class grapherWidget(gui.QMainWindow):
         sweeper = sweepInstance(self,details,ID,status,'ID: %i (%s)'%(ID,status),kind)
         self.sweepers.update([[ID,sweeper]])
         self.tabs.addTab(sweeper,'ID: %i (%s)'%(ID,status))
-            
 
-##if __name__=='__main__':
-##    app = gui.QApplication(sys.argv)
-##    m=grapherWidget()
-##    sys.exit(app.exec_())
 
+
+if __name__=='__main__':
+    app = gui.QApplication(sys.argv)
+    m=grapherWidget('pass')
+    sys.exit(app.exec_())
 
 
 
