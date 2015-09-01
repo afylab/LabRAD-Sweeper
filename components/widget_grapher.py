@@ -76,6 +76,7 @@ class colorplotShell(gui.QWidget):
 class colorplotInstance(gui.QWidget):
     def __init__(self,xlabel,ylabel,xnum,ynum,parent=None,geometry=None):
         super(colorplotInstance,self).__init__(parent)
+        self.parent = parent
         
         self.data    = numpy.zeros([xnum,ynum])
         self.unswept = numpy.ones([xnum,ynum],dtype=bool)
@@ -89,6 +90,8 @@ class colorplotInstance(gui.QWidget):
         self.view.setRange(core.QRectF(0,0,xnum,ynum))
         self.img.setImage(self.data)
         self.first_datum = True # whether or not the next datum added is the first. Used to populate array.
+        self.min = None
+        self.max = None
         
         if not geometry==None:
             #self.gl.setParent(parent)
@@ -96,25 +99,40 @@ class colorplotInstance(gui.QWidget):
 
     def add_datum(self,x,y,value):
         if self.first_datum:
-            self.min_value = value   # initialize minimum value
             self.first_datum = False # No longer on first value
             self.data[x,y]=value     # set the value in the data array
             self.unswept[x,y]=False  # Set the point to already_swept
+            self.min = value
+            self.max = value
             
             # Set all other data points to 0.9*value (black)
             self.data[self.unswept] = value - 0.1 * abs(value)
         else:
             self.data[x,y]=value    # value is either number (greyscale) or 1D array of length 3 (r,g,b)
             self.unswept[x,y]=False # set that point to already_swept
-            if value < self.min_value: # If there's a new minimum value:
-                self.min_value = value # set the new minimum
-                self.data[self.unswept] = self.min_value # set all unswept tiles to the minimum
+            
+            if value < self.min: # If there's a new minimum value:
+                self.min = value # set the new minimum
+                self.data[self.unswept] = self.min # set all unswept tiles to the minimum
+                self.update_labels()
+
+            if value > self.max:
+                self.max = value
+                self.update_labels()
 
     def update_plot(self,colormap=maps['rb']):
         if colormap==None:
             self.img.setImage(self.data)
         else:
             self.img.setImage(colormap.map(to_unity(self.data),mode='byte'))
+
+    def update_labels(self):
+        top = self.max
+        mid = (self.max + self.min) * 0.5
+        bot = self.min
+        self.parent.label_top.setText(str(top))
+        self.parent.label_mid.setText(str(mid))
+        self.parent.label_bot.setText(str(bot))
 
 def to_unity(data):
     res = data.copy()
