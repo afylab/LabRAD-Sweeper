@@ -33,6 +33,8 @@ class plotInstance(gui.QWidget):
         self.plot.addItem(self.data)
         #self.setCentralWidget(self.plot)
     def add_datum(self,x,y):
+        if "_value" in dir(x):x=x._value
+        if "_value" in dir(y):y=y._value
         self.xdat = list(self.xdat + [x])
         self.ydat = list(self.ydat + [y])
     def update_plot(self):
@@ -95,6 +97,9 @@ class colorplotInstance(gui.QWidget):
             self.gl.setGeometry(geometry[0],geometry[1],geometry[2],geometry[3])
 
     def add_datum(self,x,y,value):
+        if "_value" in dir(value):
+            value = value[value.unit]
+            
         if self.first_datum:
             self.min_value = value   # initialize minimum value
             self.first_datum = False # No longer on first value

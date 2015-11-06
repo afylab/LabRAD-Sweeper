@@ -1,9 +1,14 @@
+"""
+User interface for writing comments to save to data sets.
+"""
+
 from PyQt4 import QtGui as gui,QtCore as core
 import sys,time
 
 from widgets import queryButton,simpleText,textInput,simpleList
 
 def format_comment(comment,nl,trail='...',delimiter=' - '):
+    """Truncates comments that are too long to display directly."""
     name = comment[0]
     if len(name) > nl:
         name = name[:nl-len(trail)]+trail
@@ -59,6 +64,7 @@ class commentBoxWidget(gui.QDialog):
         self.input_comment.setText('')
 
     def remove_selected(self):
+        """Deletes the selected comment"""
         num = self.list_comments.currentRow()
         if num < 0:return False
         items = list(self.list_comments.items)
@@ -67,10 +73,12 @@ class commentBoxWidget(gui.QDialog):
         self.list_comments.change_items(items)
 
     def remove_all(self):
+        """Deletes all comments"""
         self.list_comments.change_items([])
         self.comments = []
 
     def write_comments(self):
+        """Writes all comments to the data set"""
         if len(self.comments):
             self.parent.send_comments(self.comments)
             self.remove_all()

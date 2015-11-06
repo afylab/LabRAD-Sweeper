@@ -18,6 +18,7 @@ def format_parameter(parameter,nl,ul,delimeter):
     return force_length(name,nl)+delimeter+force_length(units,ul)+delimeter+str(parameter[2])
 
 class nameWarning(gui.QErrorMessage):
+    """User to warn user when attempting to create two parametes with the same name"""
     def __init__(self,parent):
         super(nameWarning,self).__init__(parent)
         self.parent = parent
@@ -28,6 +29,7 @@ class nameWarning(gui.QErrorMessage):
         
 
 class parameterBoxWidget(gui.QDialog):
+    """User interface for creating parameters for a data set."""
     def __init__(self,parent,used_parameters,ls=23,nl=256,ul=128,vl=128):
         super(parameterBoxWidget,self).__init__(parent)
         self.parent = parent
@@ -74,6 +76,7 @@ class parameterBoxWidget(gui.QDialog):
         self.show()
 
     def add_parameter(self):
+        
         name  = self.input_name.getValue()
         units = self.input_units.getValue()
         value = self.input_value.getValue()
