@@ -16,7 +16,7 @@ Components:
 '''
 
 from PyQt4 import QtCore as core, QtGui as gui
-import sys,math,time
+import sys,math,time,labrad
 from os import getenv
 
 
@@ -119,18 +119,18 @@ class interface(gui.QMainWindow):
 
         # check to see if the password has been set in the registry
         try:
-            password = getenv('labradpassword')
+            password = getenv('LABRADPASSWORD')
             if password == None:
                 print("Warning: environment variable 'labradpassword' has not been set yet")
                 raise
             self.connection = labrad.connect(password = password)
             self.password = password
             self.doUI()
+            return None
         except:
             print("Error: LabRAD is not running properly.")
 
         # otherwise, prompt user for password
-        import labrad
         firstAttempt=True
         success=connect=False
         while not success:

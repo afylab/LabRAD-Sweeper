@@ -10,7 +10,7 @@ def labrad_format(string):
 
 from platform import node
 serial_server_name = labrad_format(node())+'_serial_server'
-gpib_bus_name      = labrad.format(node())+'_gpib_bus'
+gpib_bus_name      = labrad_format(node())+'_gpib_bus'
 
 excluded_servers = [
             'gpib_device_manager',
