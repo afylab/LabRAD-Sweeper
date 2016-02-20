@@ -160,6 +160,7 @@ class sweepInstance(gui.QMainWindow):
         self.current_rate    = 0.0  # current sweep rate
         self.finished_time   = None # None = not finished
         self.was_paused      = False# Used to skip paused time when counting average rate
+        self.completed       = False# has it finished?
 
         self.np_swept = 0.0 # amount of setting swept while not paused
         self.np_time  = 0.0 # amount of time passed while not paused
@@ -591,15 +592,20 @@ class sweepInstance(gui.QMainWindow):
             self.inputs[self.to_sweep] = self.xsetting
             swept = self.det['setting_swept']
             connection[swept[0]].select_device(swept[1])
-            
-            if len(self.inputs) > 1:
-                connection[swept[0]].settings[swept[2]](self.inputs)
-            else:
-                connection[swept[0]].settings[swept[2]](self.inputs[0])
-                
+
             self.measurements_completed += 1
             if self.measurements_completed >= 1 + self.det['steps']:
                 completed = True
+                #print("COMPLETE")
+            
+            if not completed:
+                #print("ADVANCING...")
+                if len(self.inputs) > 1:
+                    connection[swept[0]].settings[swept[2]](self.inputs)
+                else:
+                    connection[swept[0]].settings[swept[2]](self.inputs[0])
+                
+            
 
             if (self.np_time == 0.0) or (not self.was_paused):
                 self.np_swept += self.stepsize; self.np_time += elapsed
