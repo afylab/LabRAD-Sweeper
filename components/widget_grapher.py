@@ -47,10 +47,20 @@ class colorplotShell(gui.QWidget):
         super(colorplotShell,self).__init__(parent)
         self.parent = parent
 
+        #print('\nXLABEL,YLABEL')
+        #print(xlabel,ylabel)
+
         self.xnum  = xnum
         self.ynum  = ynum
         self.x_ref = numpy.linspace(xrng[0],xrng[1],xnum)
         self.y_ref = numpy.linspace(yrng[0],yrng[1],ynum)
+
+        self.x_min = str(xrng[0])[:6]
+        self.x_med = str((xrng[0]+xrng[1])/2.0)[:6]
+        self.x_max = str(xrng[1])[:6]
+        self.y_min = str(yrng[0])[:6]
+        self.y_med = str((yrng[0]+yrng[1])/2.0)[:6]
+        self.y_max = str(yrng[1])[:6]
 
         self.colorplot = colorplotInstance(xlabel,ylabel,xnum,ynum,self,[ls,0,pl,pl])
 
@@ -59,10 +69,17 @@ class colorplotShell(gui.QWidget):
         self.bl=bl # bar length & spacing
         self.ll=ll # label length
         
-        # scale labels
-        self.label_top = simpleText(self,"TOP",[ls+pl+bl*3,0                 ,ll,ls])
-        self.label_mid = simpleText(self,"MID",[ls+pl+bl*3,int(pl//2 - ls//2),ll,ls])
-        self.label_bot = simpleText(self,"BOT",[ls+pl+bl*3,pl-ls             ,ll,ls])
+        # y labels
+        self.label_top    = simpleText(self,self.y_max, [ls+pl, 5                  , ll//2, ls], "Y setting (%s) maximum value (%s)"%(ylabel,self.y_max))
+        self.label_mid    = simpleText(self,self.y_med, [ls+pl, int(pl//2 - ls//2) , ll//2, ls], "Y setting (%s) median value (%s)"%(ylabel,self.y_med))
+        self.label_bot    = simpleText(self,self.y_min, [ls+pl, pl-(1*ls+3)        , ll//2, ls], "Y setting (%s) minimum value (%s)"%(ylabel,self.y_min))
+        self.label_y_axis = simpleText(self,str(ylabel),[ls+pl, pl-(2*ls+3)        , ll, ls]   , "Y setting (what's being swept along the y axis")
+
+        # x labels
+        self.label_left   = simpleText(self,self.x_min,  [ls                , pl   , ll//2, ls], "X setting (%s) minimum value (%s)"%(xlabel,self.x_min))
+        self.label_center = simpleText(self,self.x_med,  [ls + (pl-ll//2)//2, pl   , ll//2, ls], "X setting (%s) median value (%s)"%(xlabel,self.x_med))
+        self.label_right  = simpleText(self,self.x_max,  [ls + (pl-ll//2)   , pl   , ll//2, ls], "X setting (%s) maximum value (%s)"%(xlabel,self.x_max))
+        self.label_x_axis = simpleText(self,str(xlabel), [ls                , pl+ls, ll   , ls], "X setting (what's being swept along the x axis")
 
         # axis labels
         ##self.label_x = rotText(self,str(xlabel),[self.ls+int(self.pl//2 - self.ll//2),self.pl,self.ll,self.ls],rot=0)
@@ -71,7 +88,7 @@ class colorplotShell(gui.QWidget):
         self.label_y = rotText(self,str(ylabel),[self.ls-8,self.pl  ,self.ls,self.ll],-90)
         self.labeltest = rotText(self,"TEST: 0",[self.ls+self.pl+23,self.bl*3,256,256],90)
 
-        self.setMinimumSize(ls+pl+bl*3+ll,pl+ls)
+        self.setMinimumSize(ls+pl+bl*3+ll,pl+2*ls)
         self.setGeometry(geometry[0],geometry[1],geometry[2],geometry[3])
         
 
@@ -304,7 +321,7 @@ class sweepInstance(gui.QMainWindow):
 
     def log_data(self):
         # [!!!!] add ability to determine folder
-        location = ['','experimental data','testing']
+        location = ['','HZS14']
 
         if self.has_written:
             print("Error: data set has already been written. Note that comments and parameters can still be added.")
@@ -330,7 +347,8 @@ class sweepInstance(gui.QMainWindow):
             
             dependents = [[setting.name,setting.unit] for setting in self.setting_details]
 
-        
+
+			
 
         if self.kind == '2d':
             # reference sets
@@ -554,7 +572,7 @@ class sweepInstance(gui.QMainWindow):
                 elif n_entries == 1: # if one input required
                     value = connection.servers[setting.server].settings[setting.setting](setting.inputs[0]) # call with single value
                 else: # if more than one input required
-                    value = connection.servser[setting.server].settings[setting.setting](setting.inputs)
+                    value = connection.servers[setting.server].settings[setting.setting](setting.inputs)
                 values.update([[ setting.ID, value ]])
 
             if self.first_meas:
