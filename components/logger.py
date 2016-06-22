@@ -31,11 +31,22 @@ class dataLogger(object):
         
         self.details = None
 
+    def make_directory(self,loc):
+        for depth in range(1,len(loc)):
+            self.dv.cd(loc[:depth])
+            folders,files=self.dv.dir()
+            if not (loc[depth] in folders):
+                self.dv.mkdir(loc[depth])
+
     def make_dataset(self,name,loc,indep,dep):
         '''Creates a new data set, and returns the number of the set created.'''
         if self.active:
             print("Error: there is already an active dataset. Please wait until it finishes.")
             return False
+
+        if len(loc) == 0:loc=['']  # replace empty -> root
+        if loc[0]!='':loc=['']+loc # must start from root
+        self.make_directory(loc)   # ensure that the directory exists
 
         self.dv.cd(loc)
         new = self.dv.new(name,indep,dep)

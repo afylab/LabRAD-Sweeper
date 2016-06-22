@@ -177,6 +177,7 @@ class sweepInstance(gui.QMainWindow):
         self.current_rate    = 0.0  # current sweep rate
         self.finished_time   = None # None = not finished
         self.was_paused      = False# Used to skip paused time when counting average rate
+        self.completed       = False# has it finished?
 
         self.np_swept = 0.0 # amount of setting swept while not paused
         self.np_time  = 0.0 # amount of time passed while not paused
@@ -303,25 +304,42 @@ class sweepInstance(gui.QMainWindow):
         self.label_complete_rate = simpleText(self,"Average rate:",[self.gw//2+76+self.ls,self.ls*1,self.gw//2,self.ls])
         self.label_current_rate  = simpleText(self,"Current rate:",[self.gw//2+76+self.ls,self.ls*2,self.gw//2,self.ls])
 
-        # data logging (data vault) details
-        self.input_logname         = textInput(self,'',[self.gw+76+self.ls*2,0,self.ll,self.ls])
+        # data set name, location
+        self.input_logname = textInput(self,'',[self.gw+76+self.ls*2,self.ls*0,self.ll,self.ls])
+        self.input_logdest = textInput(self,'',[self.gw+76+self.ls*2,self.ls*1,self.ll,self.ls])
         self.input_logname.setPlaceholderText("Dataset name")
-        
-        self.button_add_comments   = queryButton("Add comment(s)"  ,self,'',[self.gw+76+self.ls*2,self.ls*1],self.add_comments)
-        self.button_add_parameters = queryButton("Add parameter(s)",self,'',[self.gw+76+self.ls*2,self.ls*2],self.add_parameters)
-        self.button_log_data       = queryButton("Write data set"  ,self,'',[self.gw+76+self.ls*2,self.ls*3],self.log_data)
+        self.input_logdest.setPlaceholderText("Dataset location")
+        self.input_logdest.setToolTip("Folders separated by '\\' characters.\nNo leading or trailing backslash.\nExample: data\\testing\\2016\nDefault: HZS14")
+
+        # data logging (data vault) details
+        self.button_add_comments   = queryButton("Add comment(s)"  ,self,'',[self.ll+self.gw+76+self.ls*3,self.ls*0],self.add_comments)
+        self.button_add_parameters = queryButton("Add parameter(s)",self,'',[self.ll+self.gw+76+self.ls*3,self.ls*1],self.add_parameters)
+        self.button_log_data       = queryButton("Write data set"  ,self,'',[self.ll+self.gw+76+self.ls*3,self.ls*2],self.log_data)
 
         # colormap
         if self.kind == '2d':
-            self.label_colormap    = simpleText(self,"Color map:",[self.ll+self.ls+self.gw+76+self.ls*2,0,64,self.ls])
-            self.dropdown_colormap = simpleDropdown(self,["None","Custom"]+maps.keys(),[self.ll+self.ls+self.gw+self.ls*2+76+64,0,64,self.ls],self.change_colormap)
-            self.button_custommap  = queryButton("Custom",self,'',[self.ll+self.ls+self.gw+76+self.ls*2,self.ls],self.cust_map)
+            self.label_colormap    = simpleText(self,"Color map:",                      [self.ll*2+self.ls*2+self.gw+76+self.ls*2,    0, 64, self.ls])
+            self.dropdown_colormap = simpleDropdown(self,["None","Custom"]+maps.keys(), [self.ll*2+self.ls*2+self.gw+self.ls*2+76+64, 0, 64, self.ls],self.change_colormap)
+            self.button_custommap  = queryButton("Custom",self,'',                      [self.ll*2+self.ls*2+self.gw+76+self.ls*2,    self.ls ],self.cust_map)
         elif self.kind == '1d':
             self.label_colormap = self.dropdown_colormap = self.button_custommap = None
 
     def log_data(self):
-        # [!!!!] add ability to determine folder
-        location = ['','HZS14']
+
+        # Get file destination directory
+        location_raw = str(self.input_logdest.getValue())
+        if location_raw:
+            while location_raw.startswith('\\'): # Remove leading backslashes
+                location_raw = location_raw[1:]  #
+            while location_raw.endswith('\\'):   # Remove trailing backslashes
+                location_raw = location_raw[:-1] #
+            lines = location_raw.replace('\\','\n').splitlines()
+            location = ['']+lines
+        else:
+            location = ['','HZS14']
+
+        #print(location)
+
 
         if self.has_written:
             print("Error: data set has already been written. Note that comments and parameters can still be added.")
@@ -609,15 +627,20 @@ class sweepInstance(gui.QMainWindow):
             self.inputs[self.to_sweep] = self.xsetting
             swept = self.det['setting_swept']
             connection[swept[0]].select_device(swept[1])
-            
-            if len(self.inputs) > 1:
-                connection[swept[0]].settings[swept[2]](self.inputs)
-            else:
-                connection[swept[0]].settings[swept[2]](self.inputs[0])
-                
+
             self.measurements_completed += 1
             if self.measurements_completed >= 1 + self.det['steps']:
                 completed = True
+                #print("COMPLETE")
+            
+            if not completed:
+                #print("ADVANCING...")
+                if len(self.inputs) > 1:
+                    connection[swept[0]].settings[swept[2]](self.inputs)
+                else:
+                    connection[swept[0]].settings[swept[2]](self.inputs[0])
+                
+            
 
             if (self.np_time == 0.0) or (not self.was_paused):
                 self.np_swept += self.stepsize; self.np_time += elapsed
