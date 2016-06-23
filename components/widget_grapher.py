@@ -136,7 +136,7 @@ class colorplotInstance(gui.QWidget):
         if colormap==None:
             self.img.setImage(self.data)
         else:
-            self.img.setImage(colormap.map(to_unity(self.data),mode='byte'))
+            self.img.setImage(colormap.map(to_unity(self.data),mode='float'))
 
 def to_unity(data):
     res = data.copy()
@@ -146,6 +146,9 @@ def to_unity(data):
         res /= max_
     return res
     
+#def to_mappable(data):
+#    return (to_unity(data)*(2**30)).astype('int32')
+
 def conc_parameter_list(parameter_list):
     '''flattens [name, units, value] to [name (units), value]'''
     newlist = []
