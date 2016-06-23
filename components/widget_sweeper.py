@@ -488,14 +488,14 @@ class widgetSweptSelector(gui.QWidget):
 			
 		self.selector_swept = selector(  self,[0,self.ls*1],self.sh,self.cs,self.data)
 		
-		self.label_start = simpleText(self,"Start",[self.cs*3,self.ls*1,self.ll,self.ls])
-		self.label_stop  = simpleText(self,"Stop" ,[self.cs*3,self.ls*2,self.ll,self.ls])
-		self.label_steps = simpleText(self,"Steps",[self.cs*3,self.ls*3,self.ll,self.ls])
-		self.label_delay = simpleText(self,"Delay",[self.cs*3,self.ls*4,self.ll,self.ls])
-		self.input_start = floatInput(self,nobound,4,None,[self.cs*3+self.ll,self.ls*1,self.il,self.ls])
-		self.input_stop  = floatInput(self,nobound,4,None,[self.cs*3+self.ll,self.ls*2,self.il,self.ls])
-		self.input_steps = intInput( self,[1,999999],None,[self.cs*3+self.ll,self.ls*3,self.il,self.ls])
-		self.input_delay = floatInput(self,nobound,4,None,[self.cs*3+self.ll,self.ls*4,self.il,self.ls])
+		self.label_start  = simpleText(self,"Start"  ,[self.cs*3,self.ls*1,self.ll+2,self.ls])
+		self.label_stop   = simpleText(self,"Stop"   ,[self.cs*3,self.ls*2,self.ll+2,self.ls])
+		self.label_points = simpleText(self,"Points" ,[self.cs*3,self.ls*3,self.ll+2,self.ls])
+		self.label_delay  = simpleText(self,"Delay"  ,[self.cs*3,self.ls*4,self.ll+2,self.ls])
+		self.input_start  = floatInput(self,nobound  ,4,None,[self.cs*3+self.ll,self.ls*1,self.il,self.ls])
+		self.input_stop   = floatInput(self,nobound  ,4,None,[self.cs*3+self.ll,self.ls*2,self.il,self.ls])
+		self.input_points = intInput( self,[1,999999]  ,None,[self.cs*3+self.ll,self.ls*3,self.il,self.ls])
+		self.input_delay  = floatInput(self,nobound  ,4,None,[self.cs*3+self.ll,self.ls*4,self.il,self.ls])
 
 		# custom name
 		self.input_custom_name = textInput(self,"",[self.cs*3+self.il+self.ll+self.ls,0,self.il+self.ll*2,self.ls])
@@ -512,7 +512,7 @@ class widgetSweptSelector(gui.QWidget):
 		self.ramp_rate_limit.editingFinished.connect(self.check_ramp_rate)
 		self.input_start.editingFinished.connect(self.check_ramp_rate)
 		self.input_stop.editingFinished.connect(self.check_ramp_rate)
-		self.input_steps.editingFinished.connect(self.check_ramp_rate)
+		self.input_points.editingFinished.connect(self.check_ramp_rate)
 		self.input_delay.editingFinished.connect(self.check_ramp_rate)
 
 		# setting input widget
@@ -523,7 +523,7 @@ class widgetSweptSelector(gui.QWidget):
 	def check_control_complete(self):
 		start = self.input_start.getValue()
 		stop  = self.input_stop.getValue()
-		steps = self.input_steps.getValue()
+		steps = self.input_points.getValue() - 1
 		delay = self.input_delay.getValue()
 		return all([str(val) != 'nan' for val in [start,stop,steps,delay]])
 
@@ -534,20 +534,20 @@ class widgetSweptSelector(gui.QWidget):
 		
 		start = self.input_start.getValue()
 		stop  = self.input_stop.getValue()
-		steps = self.input_steps.getValue()
+		steps = self.input_points.getValue() - 1
 		delay = self.input_delay.getValue()
 
 		# check for invalid step count
 		if self.set_type == None:
 			if steps < 1:
-				self.parent.warning_box.set_issue("Step count is invalid: it must be at least 1",True)
+				self.parent.warning_box.set_issue("Point count is invalid: it must be at least 2",True)
 				return False
-			self.parent.warning_box.set_issue("Step count is invalid: it must be at least 1",False)
+			self.parent.warning_box.set_issue("Point count is invalid: it must be at least 2",False)
 		else:
 			if steps<1:
-				self.parent.warning_box.set_issue("Step cound for %s setting is invalid: it must be at least 1"%self.set_type,True)
+				self.parent.warning_box.set_issue("Point cound for %s setting is invalid: it must be at least 2"%self.set_type,True)
 				return False
-			self.parent.warning_box.set_issue("Step cound for %s setting is invalid: it must be at least 1"%self.set_type,False)
+			self.parent.warning_box.set_issue("Point cound for %s setting is invalid: it must be at least 2"%self.set_type,False)
 			
 		try:
 			natrate = 1000.0*(((stop-start)/(steps))/delay)
@@ -564,7 +564,7 @@ class widgetSweptSelector(gui.QWidget):
 			self.label_error_box.clear();self.label_error_box.insertPlainText("status: incomplete")
 			return False
 		if natrate > maxrate:
-			self.label_error_box.setToolTip("The rate that would be achieved by the current settings\n(start,stop,steps,delay) exceeds the enterred rate limit.")
+			self.label_error_box.setToolTip("The rate that would be achieved by the current settings\n(start,stop,points,delay) exceeds the enterred rate limit.")
 			self.label_error_box.clear();self.label_error_box.insertPlainText("Warning: rate too high")
 			return True
 		self.label_error_box.setToolTip("Rate is OK. (rate limit exceeds sweep rate)")
@@ -909,7 +909,7 @@ class sweeperWidget(gui.QMainWindow):
 				'settings_read': list(self.s1d.recorded_settings.list_to_be_logged.items),
 				'start'        : self.s1d.swept_settings.input_start.getValue(),
 				'stop'         : self.s1d.swept_settings.input_stop.getValue(),
-				'steps'        : self.s1d.swept_settings.input_steps.getValue(),
+				'steps'        : self.s1d.swept_settings.input_points.getValue()-1,
 				'delay'        : self.s1d.swept_settings.input_delay.getValue(),
 				'do_maxrate'   : self.s1d.swept_settings.limit_ramp_rate.isChecked(),
 				'maxrate'      : self.s1d.swept_settings.ramp_rate_limit.getValue(),
@@ -927,10 +927,10 @@ class sweeperWidget(gui.QMainWindow):
 				'settings_read':list(self.s2d.recorded_settings.list_to_be_logged.items),
 				'fast_swept'   :self.s2d.sweep_fast.get_selected_setting(),
 				'slow_swept'   :self.s2d.sweep_slow.get_selected_setting(),
-				'xnum'         :self.s2d.sweep_fast.input_steps.getValue()+1,
-				'ynum'         :self.s2d.sweep_slow.input_steps.getValue()+1,
-				'xsteps'       :self.s2d.sweep_fast.input_steps.getValue(),
-				'ysteps'       :self.s2d.sweep_slow.input_steps.getValue(),
+				'xnum'         :self.s2d.sweep_fast.input_points.getValue(),
+				'ynum'         :self.s2d.sweep_slow.input_points.getValue(),
+				'xsteps'       :self.s2d.sweep_fast.input_points.getValue()-1,
+				'ysteps'       :self.s2d.sweep_slow.input_points.getValue()-1,
 				'xstart'       :self.s2d.sweep_fast.input_start.getValue(),
 				'xstop'        :self.s2d.sweep_fast.input_stop.getValue() ,
 				'ystart'       :self.s2d.sweep_slow.input_start.getValue(),
