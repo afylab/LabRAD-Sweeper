@@ -4,7 +4,7 @@ import sys,time,numpy
 from numpy import array
 from math import e,pi,floor
 
-from widgets              import queryButton,simpleText,checkBox,simpleDropdown,rotText,textInput
+from widgets              import queryButton,simpleText,checkBox,simpleDropdown,rotText,textInput,simpleLabel
 from colormaps            import maps
 from logger               import dataLogger,datasetDetails
 from widget_comment_box   import commentBoxWidget
@@ -70,16 +70,16 @@ class colorplotShell(gui.QWidget):
         self.ll=ll # label length
         
         # y labels
-        self.label_top    = simpleText(self,self.y_max, [ls+pl, 5                  , ll//2, ls], "Y setting (%s) maximum value (%s)"%(ylabel,self.y_max))
-        self.label_mid    = simpleText(self,self.y_med, [ls+pl, int(pl//2 - ls//2) , ll//2, ls], "Y setting (%s) median value (%s)"%(ylabel,self.y_med))
-        self.label_bot    = simpleText(self,self.y_min, [ls+pl, pl-(1*ls+3)        , ll//2, ls], "Y setting (%s) minimum value (%s)"%(ylabel,self.y_min))
-        self.label_y_axis = simpleText(self,str(ylabel),[ls+pl, pl-(2*ls+3)        , ll, ls]   , "Y setting (what's being swept along the y axis")
+        self.label_top    = simpleLabel(self,self.y_max, [ls+pl+2, 11                     , ll//2, ls], "Y setting (%s) maximum value (%s)"%(ylabel,self.y_max))
+        self.label_mid    = simpleLabel(self,self.y_med, [ls+pl+2, int(pl//2 - ls//2) + 3 , ll//2, ls], "Y setting (%s) median value (%s)"%(ylabel,self.y_med))
+        self.label_bot    = simpleLabel(self,self.y_min, [ls+pl+2, pl-(1*ls+3)            , ll//2, ls], "Y setting (%s) minimum value (%s)"%(ylabel,self.y_min))
+        self.label_y_axis = simpleLabel(self,str(ylabel),[ls+pl+2, pl-(2*ls+3)            , ll, ls]   , "Y setting (what's being swept along the y axis")
 
         # x labels
-        self.label_left   = simpleText(self,self.x_min,  [ls                , pl   , ll//2, ls], "X setting (%s) minimum value (%s)"%(xlabel,self.x_min))
-        self.label_center = simpleText(self,self.x_med,  [ls + (pl-ll//2)//2, pl   , ll//2, ls], "X setting (%s) median value (%s)"%(xlabel,self.x_med))
-        self.label_right  = simpleText(self,self.x_max,  [ls + (pl-ll//2)   , pl   , ll//2, ls], "X setting (%s) maximum value (%s)"%(xlabel,self.x_max))
-        self.label_x_axis = simpleText(self,str(xlabel), [ls                , pl+ls, ll   , ls], "X setting (what's being swept along the x axis")
+        self.label_left   = simpleLabel(self,self.x_min,  [ls + 12                , pl   , ll//2, ls], "X setting (%s) minimum value (%s)"%(xlabel,self.x_min))
+        self.label_center = simpleLabel(self,self.x_med,  [ls + 18 + (pl-ll//2)//2, pl   , ll//2, ls], "X setting (%s) median value (%s)"%(xlabel,self.x_med))
+        self.label_right  = simpleLabel(self,self.x_max,  [ls + 24 + (pl-ll//2)   , pl   , ll//2, ls], "X setting (%s) maximum value (%s)"%(xlabel,self.x_max))
+        self.label_x_axis = simpleLabel(self,str(xlabel), [ls + 12                , pl+ls, ll   , ls], "X setting (what's being swept along the x axis")
 
         # axis labels
         ##self.label_x = rotText(self,str(xlabel),[self.ls+int(self.pl//2 - self.ll//2),self.pl,self.ll,self.ls],rot=0)
