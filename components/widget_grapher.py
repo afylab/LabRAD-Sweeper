@@ -14,6 +14,7 @@ from widget_parameter_box import parameterBoxWidget
 class plotInstance(gui.QWidget):
     def __init__(self,xlabel,ylabel,xrng=None,xdata=[],ydata=[],parent=None,geometry=None):
         super(plotInstance,self).__init__(None)
+
         self.plot = pg.PlotWidget(parent)
         self.plot.setLabel('bottom',text=xlabel)
         self.plot.setLabel('left',text=ylabel)
@@ -43,7 +44,7 @@ class plotInstance(gui.QWidget):
         self.plot.addItem(self.data)
 
 class colorplotShell(gui.QWidget):
-    def __init__(self,xlabel,ylabel,xnum,ynum,xrng,yrng,parent=None,geometry=None,ls=23,pl=320,bl=12,ll=128):
+    def __init__(self,xlabel,ylabel,xnum,ynum,xrng,yrng,parent=None,geometry=None,ls=23,pl=320,bl=12,ll=128,ih=96):
         super(colorplotShell,self).__init__(parent)
         self.parent = parent
 
@@ -62,7 +63,7 @@ class colorplotShell(gui.QWidget):
         self.y_med = str((yrng[0]+yrng[1])/2.0)[:6]
         self.y_max = str(yrng[1])[:6]
 
-        self.colorplot = colorplotInstance(xlabel,ylabel,xnum,ynum,self,[ls,0,pl,pl])
+        self.colorplot = colorplotInstance(xlabel,ylabel,xnum,ynum,self,[ls*3,0,pl,pl])
 
         self.ls=ls # line spacing
         self.pl=pl # plot sidelength
@@ -70,37 +71,66 @@ class colorplotShell(gui.QWidget):
         self.ll=ll # label length
         
         # y labels
-        self.label_top    = simpleLabel(self,self.y_max, [ls+pl+2, 11                     , ll//2, ls], "Y setting (%s) maximum value (%s)"%(ylabel,self.y_max))
-        self.label_mid    = simpleLabel(self,self.y_med, [ls+pl+2, int(pl//2 - ls//2) + 3 , ll//2, ls], "Y setting (%s) median value (%s)"%(ylabel,self.y_med))
-        self.label_bot    = simpleLabel(self,self.y_min, [ls+pl+2, pl-(1*ls+3)            , ll//2, ls], "Y setting (%s) minimum value (%s)"%(ylabel,self.y_min))
-        self.label_y_axis = simpleLabel(self,str(ylabel),[ls+pl+2, pl-(2*ls+3)            , ll, ls]   , "Y setting (what's being swept along the y axis")
+        self.label_top    = simpleLabel(self,self.y_max, [ls*3+pl+2, 11                     , ll//2, ls], "Y setting (%s) maximum value (%s)"%(ylabel,self.y_max))
+        self.label_mid    = simpleLabel(self,self.y_med, [ls*3+pl+2, int(pl//2 - ls//2) + 3 , ll//2, ls], "Y setting (%s) median value (%s)"%(ylabel,self.y_med))
+        self.label_bot    = simpleLabel(self,self.y_min, [ls*3+pl+2, pl-(1*ls+3)            , ll//2, ls], "Y setting (%s) minimum value (%s)"%(ylabel,self.y_min))
+        self.label_y_axis = simpleLabel(self,str(ylabel),[ls*3+pl+2, pl-(2*ls+3)+ls//2      , ll, ls]   , "Y setting (what's being swept along the y axis")
 
         # x labels
-        self.label_left   = simpleLabel(self,self.x_min,  [ls + 12                , pl   , ll//2, ls], "X setting (%s) minimum value (%s)"%(xlabel,self.x_min))
-        self.label_center = simpleLabel(self,self.x_med,  [ls + 18 + (pl-ll//2)//2, pl   , ll//2, ls], "X setting (%s) median value (%s)"%(xlabel,self.x_med))
-        self.label_right  = simpleLabel(self,self.x_max,  [ls + 24 + (pl-ll//2)   , pl   , ll//2, ls], "X setting (%s) maximum value (%s)"%(xlabel,self.x_max))
-        self.label_x_axis = simpleLabel(self,str(xlabel), [ls + 12                , pl+ls, ll   , ls], "X setting (what's being swept along the x axis")
+        self.label_left   = simpleLabel(self,self.x_min,  [ls*3 + 12                , pl      , ll//2, ls], "X setting (%s) minimum value (%s)"%(xlabel,self.x_min))
+        self.label_center = simpleLabel(self,self.x_med,  [ls*3 + 18 + (pl-ll//2)//2, pl      , ll//2, ls], "X setting (%s) median value (%s)"%(xlabel,self.x_med))
+        self.label_right  = simpleLabel(self,self.x_max,  [ls*3 + 24 + (pl-ll//2)   , pl      , ll//2, ls], "X setting (%s) maximum value (%s)"%(xlabel,self.x_max))
+        self.label_x_axis = simpleLabel(self,str(xlabel), [ls*3 + 12                , pl+ls//2, ll   , ls], "X setting (what's being swept along the x axis")
 
-        # axis labels
-        ##self.label_x = rotText(self,str(xlabel),[self.ls+int(self.pl//2 - self.ll//2),self.pl,self.ll,self.ls],rot=0)
-        ##self.label_y = rotText(self,str(ylabel),[
-        self.label_x = rotText(self,str(xlabel),[self.ls  ,self.pl+8,self.ll,self.ls],  0)
-        self.label_y = rotText(self,str(ylabel),[self.ls-8,self.pl  ,self.ls,self.ll],-90)
-        self.labeltest = rotText(self,"TEST: 0",[self.ls+self.pl+23,self.bl*3,256,256],90)
+        # Horizontal slice
+        self.plot_horizontal_slice = plotInstance(None,'meas',xrng,[],[],self,[3*ls,pl+1*ls,pl,ih])
+        self.plot_horizontal_slice.plot.getAxis('bottom').setHeight(12)
+        self.plot_horizontal_slice.plot.getAxis('left').setWidth(20)
+        self.plot_horizontal_slice.plot.enableAutoRange()
 
-        self.setMinimumSize(ls+pl+bl*3+ll,pl+2*ls)
+        # Vertical slice
+        self.plot_vertical_slice   = plotInstance('meas',None,yrng,[],[],self,[6*ls+pl,0,ih,pl])
+        self.plot_vertical_slice.plot.getAxis('left').setWidth(20)
+        self.plot_vertical_slice.plot.getAxis('bottom').setHeight(12)
+        self.plot_vertical_slice.plot.enableAutoRange()
+
+        # Can be 'follow' or 'static'
+        # Follow makes the slice point assume the position of each measurement done as it's completed,
+        # Static makes the slice point user-defined and not change (unless redefined)
+        self.slice_mode  = 'follow' # 
+        self.slice_point = [0,0]    # [xnum,ynum]
+
+        # slice mode buttons
+        self.button_auto_slice   = queryButton("Auto slice"      ,self,'',[pl+ls*4,pl+2*ls],self.enable_auto_slice)
+        self.button_choose_slice = queryButton("Chooes point"    ,self,'',[pl+ls*4,pl+3*ls],self.choose_slice_point)
+        self.button_reset_slices = queryButton("Reset slice view",self,'',[pl+ls*4,pl+4*ls],self.reset_slice_view)
+
+        self.setMinimumSize(6*ls+pl+ih,1*ls+pl+ih)
         self.setGeometry(geometry[0],geometry[1],geometry[2],geometry[3])
-        
+    
+    def reset_slice_view(self):
+        self.plot_horizontal_slice.plot.enableAutoRange()
+        self.plot_vertical_slice.plot.enableAutoRange()
+
+    def enable_auto_slice(self):
+    	self.reset_slice_view()
+    	self.slice_mode = 'follow'
+
+    def choose_slice_point(self):
+    	self.slice_mode = 'choosing'
 
 class colorplotInstance(gui.QWidget):
     def __init__(self,xlabel,ylabel,xnum,ynum,parent=None,geometry=None):
         super(colorplotInstance,self).__init__(parent)
+        self.parent=parent
         
         self.data    = numpy.zeros([xnum,ynum])
         self.unswept = numpy.ones([xnum,ynum],dtype=bool)
 
         self.gl = pg.GraphicsLayoutWidget(parent)
         self.gl.setAspectLocked(True)
+
+        self.gl.scene().sigMouseClicked.connect(self.mouse_event)
 
         self.view = self.gl.addViewBox()
         self.img  = pg.ImageItem(border='w')
@@ -116,7 +146,10 @@ class colorplotInstance(gui.QWidget):
     def add_datum(self,x,y,value):
         if "_value" in dir(value):
             value = value[value.unit]
-            
+        
+        if self.parent.slice_mode in ['follow','choosing']:
+            self.parent.slice_point = [x,y]
+
         if self.first_datum:
             self.min_value = value   # initialize minimum value
             self.first_datum = False # No longer on first value
@@ -132,11 +165,51 @@ class colorplotInstance(gui.QWidget):
                 self.min_value = value # set the new minimum
                 self.data[self.unswept] = self.min_value # set all unswept tiles to the minimum
 
+
+
     def update_plot(self,colormap=maps['rb']):
         if colormap==None:
             self.img.setImage(self.data)
         else:
             self.img.setImage(colormap.map(to_unity(self.data),mode='float'))
+
+        self.parent.plot_horizontal_slice.xdat = self.parent.x_ref
+        self.parent.plot_horizontal_slice.ydat = self.data[:,self.parent.slice_point[1]]
+        self.parent.plot_horizontal_slice.update_plot()
+
+        self.parent.plot_vertical_slice.xdat = self.data[self.parent.slice_point[0],:]
+        self.parent.plot_vertical_slice.ydat = self.parent.y_ref
+        self.parent.plot_vertical_slice.update_plot()
+
+    def mouse_event(self,event):
+    	#print('mouseevent')
+    	#print(self.parent.slice_mode)
+    	#print(event.button())
+        if (self.parent.slice_mode=='choosing') and (event.button() == 1):
+            #try:
+            clickpos = self.img.mapFromScene(event.scenePos())
+            x=int(clickpos.x())
+            y=int(clickpos.y())
+            #print(x,y)
+
+            hData = self.data[:,y]
+            vData = self.data[x,:]
+
+            self.parent.plot_horizontal_slice.ydat = hData
+            self.parent.plot_vertical_slice.xdat = vData
+
+            self.parent.plot_vertical_slice.update_plot()
+            self.parent.plot_horizontal_slice.update_plot()
+
+            self.parent.slice_mode = 'static'
+            self.parent.slice_point = [x,y]
+
+
+
+
+
+
+
 
 def to_unity(data):
     res = data.copy()
@@ -146,8 +219,6 @@ def to_unity(data):
         res /= max_
     return res
     
-#def to_mappable(data):
-#    return (to_unity(data)*(2**30)).astype('int32')
 
 def conc_parameter_list(parameter_list):
     '''flattens [name, units, value] to [name (units), value]'''
@@ -165,7 +236,7 @@ pushing all further data forward'''
     return newlist
 
 class sweepInstance(gui.QMainWindow):
-    def __init__(self,parent,details,ID,status,name,kind = '1d',ls=23,gw=384,gh=192,pl=320,bl=12,ll=128):
+    def __init__(self,parent,details,ID,status,name,kind = '1d',ls=23,gw=384,gh=192,pl=320,bl=12,ll=128,ih=96):
         super(sweepInstance,self).__init__()
         # info/control bar at top
         self.parent = parent
@@ -226,8 +297,8 @@ class sweepInstance(gui.QMainWindow):
                 xname = self.det['fast_custom_name'] if self.det['fast_custom_name'] else self.det['xlabel']
                 yname = self.det['slow_custom_name'] if self.det['slow_custom_name'] else self.det['ylabel']
                 print(xname,yname)
-                x = o[0] + (ls*2+pl+bl*3+ll)*(n%2)
-                y = o[1] + (gw+ls) * int(floor(n/2.0)) # square graphs for 2d
+                x = o[0] + (n%3)             * (pl+6*ls+ih)  #(ls*2+pl+bl*3+ll)
+                y = o[1] + int(floor(n/3.0)) * (pl+2*ls+ih)  #(gw+ls) *  # square graphs for 2d
                 self.graphs.update([[ ID,colorplotShell(
                     xname,
                     yname,
@@ -368,8 +439,6 @@ class sweepInstance(gui.QMainWindow):
             
             dependents = [[setting.name,setting.unit] for setting in self.setting_details]
 
-
-			
 
         if self.kind == '2d':
             # reference sets
@@ -737,11 +806,10 @@ class grapherWidget(gui.QMainWindow):
         # details is a dictionary. It contains:
         # xlabel, ylabels, xrange, start_timestamp, start,stop,steps,delay,maxrate setting_swept, settings_measured, func_pause, func_resume, func_cancel ...
 
-        self.IDs.append(ID)
         sweeper = sweepInstance(self,details,ID,status,'ID: %i (%s)'%(ID,status),kind)
         self.sweepers.update([[ID,sweeper]])
         self.tabs.addTab(sweeper,'ID: %i (%s)'%(ID,status))
-            
+        self.IDs.append(ID)
 
 ##if __name__=='__main__':
 ##    app = gui.QApplication(sys.argv)
