@@ -4,7 +4,7 @@ import sys,time,numpy
 from numpy import array
 from math import e,pi,floor
 
-from widgets              import queryButton,simpleText,checkBox,simpleDropdown,rotText,textInput,simpleLabel
+from widgets              import queryButton,simpleText,checkBox,simpleDropdown,rotText,textInput,simpleLabel,verticalLabel
 from colormaps            import maps
 from logger               import dataLogger,datasetDetails
 from widget_comment_box   import commentBoxWidget
@@ -71,6 +71,9 @@ class colorplotShell(gui.QWidget):
         self.ll=ll # label length
         
         # y labels
+        #self.label_top = verticalLabel(self,self.y_max,[8,32],[ls*3+pl,0       ,8,32])
+        #self.label_mid = verticalLabel(self,self.y_med,[8,32],[ls*3+pl,pl//2-16,8,32])
+        #self.label_bot = verticalLabel(self,self.y_min,[8,32],[ls*3+pl,pl-32   ,8,32])
         self.label_top    = simpleLabel(self,self.y_max, [ls*3+pl+2, 11                     , ll//2, ls], "Y setting (%s) maximum value (%s)"%(ylabel,self.y_max))
         self.label_mid    = simpleLabel(self,self.y_med, [ls*3+pl+2, int(pl//2 - ls//2) + 3 , ll//2, ls], "Y setting (%s) median value (%s)"%(ylabel,self.y_med))
         self.label_bot    = simpleLabel(self,self.y_min, [ls*3+pl+2, pl-(1*ls+3)            , ll//2, ls], "Y setting (%s) minimum value (%s)"%(ylabel,self.y_min))

@@ -285,9 +285,34 @@ class selector(gui.QWidget):
                 return selections
         return selections
 
+class vertLabel(gui.QLabel):
+    def __init__(self,parent,text=None,draw_origin = [0,0]):
+        super(vertLabel,self).__init__(parent)
+        self.text = text
+        self.o    = draw_origin
 
+    def paintEvent(self,event):
+        painter = gui.QPainter(self)
+        painter.setPen(core.Qt.black)
+        painter.translate(self.o[0],self.o[1])
+        painter.rotate(-90)
+        if self.text:
+            painter.drawText(0, 0, self.text)
+        painter.end()
 
+class verticalLabel(gui.QWidget):
+    def __init__(self,parent,text,draw_origin,geometry):
+        super(verticalLabel,self).__init__(parent)
+        self.vlabel = vertLabel(None,text,[draw_origin[0]+geometry[0],draw_origin[1]+geometry[1]])
+        self.layout = gui.QHBoxLayout()
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.addWidget(self.vlabel)
+        self.setLayout(self.layout)
+        self.setGeometry(geometry[0],geometry[1],geometry[2],geometry[3])
 
+    def setText(self,text):
+        self.vlabel.text = text
+        self.vlabel.repaint()
 
 
 
