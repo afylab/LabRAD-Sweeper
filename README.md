@@ -4,7 +4,8 @@ Sweep GUI for LabRAD
 ## To-do list
 
 - [ ] Improve axis labels (vertical for Y axis)
-- [ ] Add "excluded functions" functionality & file
+- [ ] Populate "Excluded functions" with appropriate functions
+- [x] Add "excluded functions" functionality & file
 - [x] Fix colormaps
 - [x] Add colorbars with ticklabels
 - [x] Fix steps/points issue

@@ -2,6 +2,10 @@ from PyQt4 import QtGui as gui, QtCore as core
 import PyQt4 as qt
 import labrad.units as units
 
+from components.excluded_settings import getExcludedSettings
+
+print(getExcludedSettings())
+
 def get_color(pieces):
 	s = ''
 	for piece in pieces:
@@ -74,6 +78,9 @@ def doNothing(self):
 	pass
 
 def get_is_sweepable(setting):
+	# Exclude settings defined in excluded_settings.py
+	if setting.name in getExcludedSettings():return False
+
 	entries = get_entries(setting)
 	if not entries:return False
 	
@@ -88,6 +95,9 @@ def get_is_sweepable(setting):
 	
 		
 def get_is_recordable(setting):
+	# Exclude settings defined in excluded_settings.py
+	if setting.name in getExcludedSettings():return False
+
 	entries = get_entries(setting)
 	if not entries:entries = [] # (zero entries) can still be valid.
 
