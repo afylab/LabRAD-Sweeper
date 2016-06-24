@@ -44,7 +44,7 @@ class plotInstance(gui.QWidget):
         self.plot.addItem(self.data)
 
 class colorplotShell(gui.QWidget):
-    def __init__(self,xlabel,ylabel,xnum,ynum,xrng,yrng,parent=None,geometry=None,ls=23,pl=320,bl=12,ll=128,ih=96):
+    def __init__(self,xlabel,ylabel,xnum,ynum,xrng,yrng,parent=None,geometry=None,name="",ls=23,pl=320,bl=12,ll=128,ih=96):
         super(colorplotShell,self).__init__(parent)
         self.parent = parent
 
@@ -63,7 +63,7 @@ class colorplotShell(gui.QWidget):
         self.y_med = str((yrng[0]+yrng[1])/2.0)[:6]
         self.y_max = str(yrng[1])[:6]
 
-        self.colorplot = colorplotInstance(xlabel,ylabel,xnum,ynum,self,[ls*3,0,pl,pl])
+        self.colorplot = colorplotInstance(xlabel,ylabel,xnum,ynum,self,[ls*3,0,pl,pl],[ls*2,0,ls,pl])
 
         self.ls=ls # line spacing
         self.pl=pl # plot sidelength
@@ -83,13 +83,13 @@ class colorplotShell(gui.QWidget):
         self.label_x_axis = simpleLabel(self,str(xlabel), [ls*3 + 12                , pl+ls//2, ll   , ls], "X setting (what's being swept along the x axis")
 
         # Horizontal slice
-        self.plot_horizontal_slice = plotInstance(None,'meas',xrng,[],[],self,[3*ls,pl+1*ls,pl,ih])
+        self.plot_horizontal_slice = plotInstance(None,None,xrng,[],[],self,[3*ls,pl+1*ls,pl,ih])
         self.plot_horizontal_slice.plot.getAxis('bottom').setHeight(12)
         self.plot_horizontal_slice.plot.getAxis('left').setWidth(20)
         self.plot_horizontal_slice.plot.enableAutoRange()
 
         # Vertical slice
-        self.plot_vertical_slice   = plotInstance('meas',None,yrng,[],[],self,[6*ls+pl,0,ih,pl])
+        self.plot_vertical_slice   = plotInstance(None,None,yrng,[],[],self,[6*ls+pl,0,ih,pl])
         self.plot_vertical_slice.plot.getAxis('left').setWidth(20)
         self.plot_vertical_slice.plot.getAxis('bottom').setHeight(12)
         self.plot_vertical_slice.plot.enableAutoRange()
@@ -101,8 +101,12 @@ class colorplotShell(gui.QWidget):
         self.slice_point = [0,0]    # [xnum,ynum]
 
         # slice mode buttons
+        #print(dir(self.parent.det))
+        #print(self.parent.det.items())
+        #print(str(self.parent.det['setting_details'].name))
+        self.label_measurement_name = simpleText(self,name,[pl+ls*4,pl+1*ls,ll,ls],"OBJTT")
         self.button_auto_slice   = queryButton("Auto slice"      ,self,'',[pl+ls*4,pl+2*ls],self.enable_auto_slice)
-        self.button_choose_slice = queryButton("Chooes point"    ,self,'',[pl+ls*4,pl+3*ls],self.choose_slice_point)
+        self.button_choose_slice = queryButton("Choose point"    ,self,'',[pl+ls*4,pl+3*ls],self.choose_slice_point)
         self.button_reset_slices = queryButton("Reset slice view",self,'',[pl+ls*4,pl+4*ls],self.reset_slice_view)
 
         self.setMinimumSize(6*ls+pl+ih,1*ls+pl+ih)
@@ -120,7 +124,7 @@ class colorplotShell(gui.QWidget):
     	self.slice_mode = 'choosing'
 
 class colorplotInstance(gui.QWidget):
-    def __init__(self,xlabel,ylabel,xnum,ynum,parent=None,geometry=None):
+    def __init__(self,xlabel,ylabel,xnum,ynum,parent=None,geometry=None,barGeometry=None,ls=23,pl=320):
         super(colorplotInstance,self).__init__(parent)
         self.parent=parent
         
@@ -140,8 +144,41 @@ class colorplotInstance(gui.QWidget):
         self.first_datum = True # whether or not the next datum added is the first. Used to populate array.
         
         if not geometry==None:
-            #self.gl.setParent(parent)
             self.gl.setGeometry(geometry[0],geometry[1],geometry[2],geometry[3])
+
+
+        ColorBarResolution = 256
+        self.cBarData = numpy.linspace(0,1,ColorBarResolution).reshape([1,ColorBarResolution])
+        
+        self.cBarGl = pg.GraphicsLayoutWidget(parent)
+        self.cBarGl.setAspectLocked(True)
+
+        self.cBarGl.ci.layout.setContentsMargins(0,0,0,0)
+        self.cBarGl.ci.layout.setSpacing(0)
+
+        self.cBarView = self.cBarGl.addViewBox(enableMouse=False)
+        self.cBarImg  = pg.ImageItem(border='w')
+        self.cBarView.addItem(self.cBarImg)
+        self.cBarView.setRange(core.QRectF(0,0,1,ColorBarResolution))
+        self.cBarImg.setImage(self.cBarData)
+
+        end_1 = ((0.02 * 50/51.0)+1)**-1 # The image item adds borders of +-2% of range; these values are set so that
+        end_0 = end_1 / 51.0             # the actual borders are 0 and 1 instead of -0.02 and 1.02. Sheesh.
+        self.cBarView.setXRange(end_0,end_1,None)
+        self.cBarView.setYRange(end_0*ColorBarResolution,end_1*ColorBarResolution,None)
+
+        gs = (pl-5*ls)//4
+
+        self.cBarTick0 = simpleText(self,"",[0,(ls+gs)*4,2*ls,ls],"")
+        self.cBarTick1 = simpleText(self,"",[0,(ls+gs)*3,2*ls,ls],"")
+        self.cBarTick2 = simpleText(self,"",[0,(ls+gs)*2,2*ls,ls],"")
+        self.cBarTick3 = simpleText(self,"",[0,(ls+gs)*1,2*ls,ls],"")
+        self.cBarTick4 = simpleText(self,"",[0,(ls+gs)*0,2*ls,ls],"")
+
+        #print(dir(self.cBarView))
+
+        if not barGeometry==None:
+            self.cBarGl.setGeometry(barGeometry[0],barGeometry[1],barGeometry[2],barGeometry[3])
 
     def add_datum(self,x,y,value):
         if "_value" in dir(value):
@@ -152,6 +189,7 @@ class colorplotInstance(gui.QWidget):
 
         if self.first_datum:
             self.min_value = value   # initialize minimum value
+            self.max_value = value   # initialize maximum value
             self.first_datum = False # No longer on first value
             self.data[x,y]=value     # set the value in the data array
             self.unswept[x,y]=False  # Set the point to already_swept
@@ -159,19 +197,45 @@ class colorplotInstance(gui.QWidget):
             # Set all other data points to 0.9*value (black)
             self.data[self.unswept] = value - 0.1 * abs(value)
         else:
+            range_changed = False
             self.data[x,y]=value    # value is either number (greyscale) or 1D array of length 3 (r,g,b)
             self.unswept[x,y]=False # set that point to already_swept
             if value < self.min_value: # If there's a new minimum value:
                 self.min_value = value # set the new minimum
                 self.data[self.unswept] = self.min_value # set all unswept tiles to the minimum
+                range_changed = True
+            if value > self.max_value:
+                self.max_value = value
+                range_changed = True
+
+            if range_changed:
+                rng = self.max_value - self.min_value
+                tickValues = [self.min_value + (n/4.0)*rng for n in [0,1,2,3,4]]
+
+                self.cBarTick0.setText(str(tickValues[0])[:6])
+                self.cBarTick1.setText(str(tickValues[1])[:6])
+                self.cBarTick2.setText(str(tickValues[2])[:6])
+                self.cBarTick3.setText(str(tickValues[3])[:6])
+                self.cBarTick4.setText(str(tickValues[4])[:6])
+
+                self.cBarTick0.setToolTip("Minimum measured value\n%s"%str(tickValues[0]))
+                self.cBarTick1.setToolTip("Value at 25%% of range\n%s"%str(tickValues[1]))
+                self.cBarTick2.setToolTip("Value at 50%% of range\n%s"%str(tickValues[2]))
+                self.cBarTick3.setToolTip("Value at 75%% of range\n%s"%str(tickValues[3]))
+                self.cBarTick4.setToolTip("Maximum measured value\n%s"%str(tickValues[4]))
+                
+
+
 
 
 
     def update_plot(self,colormap=maps['rb']):
         if colormap==None:
             self.img.setImage(self.data)
+            self.cBarImg.setImage(self.cBarData)
         else:
             self.img.setImage(colormap.map(to_unity(self.data),mode='float'))
+            self.cBarImg.setImage(colormap.map(to_unity(self.cBarData),mode='float'))
 
         self.parent.plot_horizontal_slice.xdat = self.parent.x_ref
         self.parent.plot_horizontal_slice.ydat = self.data[:,self.parent.slice_point[1]]
@@ -296,8 +360,8 @@ class sweepInstance(gui.QMainWindow):
             elif kind == '2d':
                 xname = self.det['fast_custom_name'] if self.det['fast_custom_name'] else self.det['xlabel']
                 yname = self.det['slow_custom_name'] if self.det['slow_custom_name'] else self.det['ylabel']
-                print(xname,yname)
-                x = o[0] + (n%3)             * (pl+6*ls+ih)  #(ls*2+pl+bl*3+ll)
+                #print(xname,yname)
+                x = o[0] + (n%3)             * (pl+7*ls+ih)  #(ls*2+pl+bl*3+ll)
                 y = o[1] + int(floor(n/3.0)) * (pl+2*ls+ih)  #(gw+ls) *  # square graphs for 2d
                 self.graphs.update([[ ID,colorplotShell(
                     xname,
@@ -308,6 +372,7 @@ class sweepInstance(gui.QMainWindow):
                     [self.det['ystart'],self.det['ystop']],
                     parent=self,
                     geometry=[x,y,ls+pl+bl*3+ll,pl+ls],
+                    name=self.det['setting_details'][pos].name,
                     ls=ls,pl=pl,bl=bl,ll=ll
                     )
                                       ]])
@@ -383,7 +448,7 @@ class sweepInstance(gui.QMainWindow):
         self.input_logdest = textInput(self,'',[self.gw+76+self.ls*2,self.ls*1,self.ll,self.ls])
         self.input_logname.setPlaceholderText("Dataset name")
         self.input_logdest.setPlaceholderText("Dataset location")
-        self.input_logdest.setToolTip("Folders separated by '\\' characters.\nNo leading or trailing backslash.\nExample: data\\testing\\2016\nDefault: HZS14")
+        self.input_logdest.setToolTip("Folders separated by '\\' characters.\nNo leading or trailing backslash.\nExample: data\\testing\\2016\nDefault: data")
 
         # data logging (data vault) details
         self.button_add_comments   = queryButton("Add comment(s)"  ,self,'',[self.ll+self.gw+76+self.ls*3,self.ls*0],self.add_comments)
@@ -410,7 +475,7 @@ class sweepInstance(gui.QMainWindow):
             lines = location_raw.replace('\\','\n').splitlines()
             location = ['']+lines
         else:
-            location = ['','HZS14']
+            location = ['','data']
 
         #print(location)
 

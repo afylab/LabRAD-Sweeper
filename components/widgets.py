@@ -223,6 +223,7 @@ class selector(gui.QWidget):
         done = False
         step = 0
         self.lists = {}
+        #if len(self.cont.keys()) == 0:done=True
         while not done:
             if type(selected) == type([]):
                 done = True
