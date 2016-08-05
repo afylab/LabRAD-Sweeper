@@ -6,9 +6,9 @@ from math import e,pi,floor
 
 from widgets              import queryButton,simpleText,checkBox,simpleDropdown,rotText,textInput,simpleLabel,verticalLabel
 from colormaps            import maps
-from logger               import dataLogger,datasetDetails
 from widget_comment_box   import commentBoxWidget
 from widget_parameter_box import parameterBoxWidget
+from data_vault_handler   import DataSet
 
 
 class plotInstance(gui.QWidget):
@@ -336,14 +336,41 @@ class sweepInstance(gui.QMainWindow):
         self.colormap   = None
         self.custom_map = None
 
-        # comment, paremeters
-        self.comment_list    = []
-        self.parameter_list  = []
+        # parameters
         self.parameter_names = []
-        self.has_written     = False
+
+        # dataset
+        if kind=='1d':
+            independents = [
+            self.det['custom_name'] if self.det['custom_name'] else self.det['xlabel']
+            ]
+        else:
+            independents = [
+            'xnum',
+            'ynum',
+            self.det['fast_custom_name'] if self.det['fast_custom_name'] else self.det['xlabel'],
+            self.det['slow_custom_name'] if self.det['slow_custom_name'] else self.det['ylabel']
+            ]
+
+        dependents = [setting.name for setting in self.setting_details]
+
+        self.data_set = DataSet(
+            self.det['dv_name'],
+            self.det['dv_loc'],
+            independents,
+            dependents,
+            )
+
+
+
+        # comment, paremeters
+        # self.comment_list    = []
+        # self.parameter_list  = []
+        # self.parameter_names = []
+        # self.has_written     = False
 
         # dataset location (None = not set yet)
-        self.dataset_location = None
+        # self.dataset_location = None
 
         o = array([0,ls*5]) # origin
         self.graphs = {}
@@ -452,6 +479,8 @@ class sweepInstance(gui.QMainWindow):
         self.input_logdest = textInput(self,'',[self.gw+76+self.ls*2,self.ls*1,self.ll,self.ls])
         self.input_logname.setPlaceholderText("Dataset name")
         self.input_logdest.setPlaceholderText("Dataset location")
+        self.input_logdest.setText(self.det['dv_loc'])
+        self.input_logname.setText(self.det['dv_name'])
         self.input_logdest.setToolTip("Folders separated by '\\' characters.\nNo leading or trailing backslash.\nExample: data\\testing\\2016\nDefault: data")
 
         # data logging (data vault) details
@@ -467,10 +496,12 @@ class sweepInstance(gui.QMainWindow):
         elif self.kind == '1d':
             self.label_colormap = self.dropdown_colormap = self.button_custommap = None
 
-    def log_data(self):
+        # open dataset if autosave is on
+        if self.det['dv_autosave']:self.open_dataset()
 
-        # Get file destination directory
-        location_raw = str(self.input_logdest.getValue())
+    def open_dataset(self):
+        location_raw  = str(self.input_logdest.getValue())
+        name_raw      = str(self.input_logname.getValue())
         if location_raw:
             while location_raw.startswith('\\'): # Remove leading backslashes
                 location_raw = location_raw[1:]  #
@@ -480,93 +511,26 @@ class sweepInstance(gui.QMainWindow):
             location = ['']+lines
         else:
             location = ['','data']
+        self.data_set.location = location
+        self.data_set.name     = name_raw
+        self.data_set.create_dataset()
 
-        #print(location)
+        self.input_logdest.setReadOnly(True)
+        self.input_logname.setReadOnly(True)
 
+        self.data_set.write_comments()
+        self.data_set.write_parameters()
 
-        if self.has_written:
-            print("Error: data set has already been written. Note that comments and parameters can still be added.")
-            return False
+    def log_data(self):
 
-        if not (self.status == 'completed'):
-            print("Error: cannot log data until dataset is completed.")
-            return False
-        dataset_name = self.input_logname.getValue()
-        if dataset_name == '':
-            print("Error: you must set the name of the data set before creating it.")
-            return False
+        if not self.data_set.dataset_open:
+            # if this is the first time we're writing to the set...
+            self.open_dataset()
 
-        if self.kind == '1d':
-            name = self.det['custom_name'] if self.det['custom_name'] else self.det['xlabel']
-            refset = self.graphs[self.graphs.keys()[0]].xdat
-            try:
-                xunit = str(refset[0].unit)
-            except:
-                xunit = 'unitless'
-            independents = [[name,xunit]]
-            print(xunit)
-            
-            dependents = [[setting.name,setting.unit] for setting in self.setting_details]
-
-
-        if self.kind == '2d':
-            # reference sets
-            x_refset = self.graphs[self.graphs.keys()[0]].x_ref
-            y_refset = self.graphs[self.graphs.keys()[0]].y_ref
-            xnum     = self.graphs[self.graphs.keys()[0]].xnum
-            ynum     = self.graphs[self.graphs.keys()[0]].ynum
-            
-            xname = self.det['fast_custom_name'] if self.det['fast_custom_name'] else self.det['xlabel']
-            yname = self.det['slow_custom_name'] if self.det['slow_custom_name'] else self.det['ylabel']
-            try:
-                xunit = str(x_refset[0].unit)
-            except:
-                xunit = 'unitless'
-            try:
-                yunit = str(y_refset[0].unit)
-            except:
-                yunit = 'unitless'
-            independents = [[xname,xunit],[yname,yunit]]
-            #print(xunit,yunit)
-            
-            dependents = [[setting.name,setting.unit] for setting in self.setting_details]
-
-            
-
-        dataset_details = datasetDetails(dataset_name,location,independents,dependents)
-        global log
-        if log.active:
-            print("Error: there is an active data set. Please wait until it has finished writing its data.")
-            return False
-
-
-        data = []
-        for measurement in range(self.meas_total):
-            if self.kind == '1d':
-                data.append(
-                    [float(refset[measurement])] + [float(self.graphs[det.ID].ydat[measurement]) for det in self.setting_details]
-                    )
-            if self.kind == '2d':
-                x = measurement % xnum
-                y = int((measurement - x) // (xnum))
-                data.append(
-                    [float(x_refset[x]),float(y_refset[y])] + [float(self.graphs[det.ID].colorplot.data[x][y]) for det in self.setting_details]
-                    )
-        self.dataset_location = location[:]
-        
-        #print(data)
-        
-        #print independents + dependents
-        self.dsnum = log.make_dataset(dataset_name,location,independents,add_legend(dependents))
-        log.dump_data(data)
-        if len(self.comment_list):
-            log.add_comments(self.comment_list)
-            self.comment_list = []
-        if len(self.parameter_list):
-            log.add_parameters(self.parameter_list)
-            self.parameter_list = []
-        log.close_dataset()
-        self.has_written = True
+        # data_set.data populated while measurements ongoing, just need to write it here.
+        # If set to autowrite, write_data() will be called each time a data is added
+        print("Writing {datalen} data lines...".format(datalen=len(self.data_set.data)))
+        self.data_set.write_data()
         
         
         
@@ -574,23 +538,14 @@ class sweepInstance(gui.QMainWindow):
         commentbox = commentBoxWidget(self)
 
     def send_comments(self,comments):
-        if not self.has_written:
-            self.comment_list += comments
-        else:
-            global log
-            log.add_comments_to_file(self.dataset_location,self.dsnum,comments)
+        self.data_set.add_comments(comments,self.data_set.dataset_open)
     
     def add_parameters(self):
         parameterbox = parameterBoxWidget(self,self.parameter_names)
 
     def send_parameters(self,parameters):
-        if not self.has_written:
-            self.parameter_list += parameters
-            self.parameter_names += [param[0] for param in parameters]
-        else:
-            global log
-            log.add_parameters_to_file(self.dataset_location,self.dsnum,parameters)
-            self.parameter_names += [param[0] for param in parameters]
+        self.parameter_names += [param[0] for param in parameters]
+        self.data_set.add_parameters(parameters,self.data_set.dataset_open)
             
 
     def cust_map(self):
@@ -696,6 +651,7 @@ class sweepInstance(gui.QMainWindow):
         '''Takes a measurement of all logged variables and sends the data to the graphs. Does not advance to the next step.'''
         if self.kind == '1d':
             yval = {}
+            dependents = []
             for setting in self.setting_details:
                 connection.servers[setting.server].select_device(setting.device)
                 n_entries = len(setting.inputs)
@@ -706,6 +662,7 @@ class sweepInstance(gui.QMainWindow):
                 else: # if more than one input required
                     value = connection.servers[setting.server].settings[setting.setting](setting.inputs)
                 yval.update([[setting.ID,value]])
+                dependents+=[value]
                 
             if self.first_meas:
                 self.first_meas = False
@@ -720,9 +677,11 @@ class sweepInstance(gui.QMainWindow):
                     setting.unit = units[setting.ID]
                 
             self.add_data(self.xsetting,yval)
+            self.data_set.add_data([ [self.xsetting]+dependents ],self.det['dv_autosave'])
             
         elif self.kind == '2d':
             values = {}
+            dependents = []
             for setting in self.setting_details:
                 connection.servers[setting.server].select_device(setting.device)
                 n_entries = len(setting.inputs)
@@ -733,6 +692,7 @@ class sweepInstance(gui.QMainWindow):
                 else: # if more than one input required
                     value = connection.servers[setting.server].settings[setting.setting](setting.inputs)
                 values.update([[ setting.ID, value ]])
+                dependents += [value]
 
             if self.first_meas:
                 self.first_meas = False
@@ -747,6 +707,7 @@ class sweepInstance(gui.QMainWindow):
                     setting.unit = units[setting.ID]
                 
             self.add_data(pos = [self.x_num,self.y_num],yvalues = values)
+            self.data_set.add_data([   [self.x_num,self.y_num,self.x_setting,self.y_setting]+dependents   ],self.det['dv_autosave'])
 
             
                 
@@ -849,9 +810,7 @@ class customMapWidget(gui.QDialog):
 
 class grapherWidget(gui.QMainWindow):
     def __init__(self,password):
-        super(grapherWidget,self).__init__()        
-        global log
-        log = dataLogger(password)
+        super(grapherWidget,self).__init__()
         self.doUI()
     def doUI(self):
         self.tabs = gui.QTabWidget(self)

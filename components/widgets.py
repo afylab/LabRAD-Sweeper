@@ -38,6 +38,7 @@ class queryButton(gui.QPushButton):
 class textInput(gui.QLineEdit):
     def __init__(self,parent,toolTip,geometry,placeholder=None):
         super(textInput,self).__init__(parent)
+        self.setToolTip(toolTip)
         self.setGeometry(geometry[0],geometry[1],geometry[2],geometry[3])
         if placeholder != None:
             self.setPlaceholderText(str(placeholder))
