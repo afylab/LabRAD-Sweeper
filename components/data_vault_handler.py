@@ -4,36 +4,7 @@ Data Vault Interface
 
 """
 import labrad
-
-# class ConnectionHandler(object):
-# 	def __init__(self):
-# 		self.connection = None
-# 		self.dv         = None
-# 		self.recon      = [] # recycled contexts
-
-# 	def init_connection(self,connection):
-# 		self.connection=connection
-# 		try:
-# 			self.dv         = self.connection.data_vault
-# 		except:
-# 			self.connection = None
-# 			self.dv         = None
-# 			raise ValueError("Error: data vault not present. Please make sure data vault is functioning properly.")
-
-# 	def get_context(self):
-# 		if len(self.recon) == 0:
-# 			return self.connection.context()
-# 		else:
-# 			return self.recon.pop()
-
-# 	def expire_context(self,context):
-# 		self.recon.append(context)
-
-# CONNECTION_HANDLER = ConnectionHandler()
-
-# if __name__ == '__main__':
-# 	import labrad
-# 	CONNECTION_HANDLER.init_connection(labrad.connect())
+from labrad.units import Value
 
 class DataSet(object):
 	def __init__(self,name,location,independents,dependents):
@@ -51,8 +22,6 @@ class DataSet(object):
 		# self.ctx          = CONNECTION_HANDLER.get_context() # context to use for data vault
 		self.ctx_expired  = False                            # whether or not this context has been expired for this data set
 		self.dataset_open = False                            # whether or not the dataset is open in this context
-
-		print("Got context {ctx}".format(ctx=self.ctx))
 
 		self.comments   = [] # list of comments     that have been added but not yet written to the data set. Stored [ [comment, user], [comment, user], ... ]
 		self.parameters = [] # list of parameters   that have been added but not yet written to the data set. Stored [ [name, value],   [name, value],   ... ]
@@ -97,7 +66,7 @@ class DataSet(object):
 		if not parameters:parameters=[]
 		for param in parameters:
 			if type(param) not in [list,tuple]: raise ValueError("Error: invalid parameter type. Should be list or tuple, got {ptype}".format(ptype=type(param)))
-			if len(param) != 2:                 raise ValueError("Error: invalid parameter. should be [name,data]; got {param}".format(param=param))
+			if len(param) != 3:                 raise ValueError("Error: invalid parameter. should be [name,units,value]; got {param}".format(param=param))
 			if type(param[0]) != str:           raise ValueError("Error: invalid type for parameter name. Should be string, got {ntype}".format(ntype=type(param[0])))
 		self.parameters += parameters
 		if write:self.write_parameters()
@@ -112,7 +81,7 @@ class DataSet(object):
 				done=True
 				continue
 			param=self.parameters.pop()
-			self.dv.add_parameter(param[0],param[1],context=self.ctx)
+			self.dv.add_parameter(param[0],Value(param[2],param[1]),context=self.ctx)
 
 	def add_data(self,data,write=False):
 		if not data:data=[]

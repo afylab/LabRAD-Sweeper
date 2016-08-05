@@ -337,6 +337,9 @@ class sweepInstance(gui.QMainWindow):
         self.colormap   = None
         self.custom_map = None
 
+        # parameters
+        self.parameter_names = []
+
         # dataset
         if kind=='1d':
             independents = [
@@ -516,6 +519,9 @@ class sweepInstance(gui.QMainWindow):
         self.input_logdest.setReadOnly(True)
         self.input_logname.setReadOnly(True)
 
+        self.data_set.write_comments()
+        self.data_set.write_parameters()
+
     def log_data(self):
 
         if not self.data_set.dataset_open:
@@ -533,13 +539,14 @@ class sweepInstance(gui.QMainWindow):
         commentbox = commentBoxWidget(self)
 
     def send_comments(self,comments):
-        self.data_set.add_comments(comments,True)
+        self.data_set.add_comments(comments,self.data_set.dataset_open)
     
     def add_parameters(self):
         parameterbox = parameterBoxWidget(self,self.parameter_names)
 
     def send_parameters(self,parameters):
-        self.data_set.add_parameters(parameters,True)
+        self.parameter_names += [param[0] for param in parameters]
+        self.data_set.add_parameters(parameters,self.data_set.dataset_open)
             
 
     def cust_map(self):
