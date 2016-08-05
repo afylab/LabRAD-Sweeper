@@ -513,6 +513,9 @@ class sweepInstance(gui.QMainWindow):
         self.data_set.name     = name_raw
         self.data_set.create_dataset()
 
+        self.input_logdest.setReadOnly(True)
+        self.input_logname.setReadOnly(True)
+
     def log_data(self):
 
         if not self.data_set.dataset_open:
