@@ -548,7 +548,7 @@ class sweepInstance(gui.QMainWindow):
                     )
             if self.kind == '2d':
                 x = measurement % xnum
-                y = int((measurement - x) // (ynum))
+                y = int((measurement - x) // (xnum))
                 data.append(
                     [float(x_refset[x]),float(y_refset[y])] + [float(self.graphs[det.ID].colorplot.data[x][y]) for det in self.setting_details]
                     )
