@@ -220,7 +220,7 @@ class settingInputWidget(gui.QWidget):
 
 
 class widgetWarningBox(gui.QWidget):
-	def __init__(self,parent,pos,topline="Issues:",status="not ready",entries=[],ls=23,bl=384,el=8):
+	def __init__(self,parent,pos,topline="Issues:",status="not ready",entries=[],ls=23,bl=384,el=6):
 		super(widgetWarningBox,self).__init__(parent)
 		self.parent = parent
 		self.move(pos[0],pos[1])
@@ -623,7 +623,24 @@ class widgetSweptSelector(gui.QWidget):
 			self.row = row
 			self.input_custom_name.setText("")
 				
-			
+class dvSaveOptionsWidget(gui.QWidget):
+	def __init__(self,parent,pos,ls=23,loc_width=192,name_width=64):
+		super(dvSaveOptionsWidget,self).__init__(parent)
+		self.parent=parent
+		self.pos=pos
+		self.ls=ls
+		self.lw=loc_width
+		self.nw=name_width
+		self.doUI()
+
+	def doUI(self):
+		self.input_location = textInput(self,"location for data vault file in data vault directory",[0,0,self.lw,self.ls],"File location")
+		self.input_name     = textInput(self,"file name for data vault file"                       ,[self.lw,0,self.nw,self.ls],"File name")
+		self.cb_autosave    = checkBox(self, "Save data while recording",[0,self.ls])
+		self.input_location.setText("\\data\\")
+		self.cb_autosave.setChecked(True)
+		self.move(self.pos[0],self.pos[1])
+		self.resize(self.lw+self.nw,self.ls*2)
 			
 
 class sweep1D(gui.QWidget):
@@ -647,12 +664,16 @@ class sweep1D(gui.QWidget):
 		# recorded settings selector
 		self.recorded_settings = widgetLoggedSelector(self,[0,self.sh + self.ls*2],self.parent.contents_recordable)
 
+		# location for dv thing
+		# [self.cs*3+self.il+self.ll+self.ls,self.ls*3+self.sh]
+		self.dv_options = dvSaveOptionsWidget(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*3+self.sh])
+
 		# sweep controller
-		self.sweep_monitor = widgetSweepMonitor(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*3+self.sh],'1d')
+		self.sweep_monitor = widgetSweepMonitor(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*6+self.sh],'1d')
 
 		# warning box
 		en = list([])[:]
-		self.warning_box = widgetWarningBox(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*4+self.sh],entries = en)
+		self.warning_box = widgetWarningBox(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*7+self.sh],entries = en)
 
 	def sweep_start(self):
 		self.parent.parent.sweep_start('1d')
@@ -748,12 +769,16 @@ class sweep2D(gui.QWidget):
 		# logged settings
 		self.recorded_settings = widgetLoggedSelector(self,[0,self.ls*2 + self.sh*2],self.parent.contents_recordable)
 
+		# location for dv thing
+		# [self.cs*3+self.il+self.ll+self.ls,self.ls*3+self.sh*2]
+		self.dv_options=dvSaveOptionsWidget(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*3+self.sh*2])
+
 		# sweep controller
-		self.sweep_monitor = widgetSweepMonitor(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*3+self.sh*2],'2d')
+		self.sweep_monitor = widgetSweepMonitor(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*6+self.sh*2],'2d')
 
 		# warning box
 		en = list([])[:]
-		self.warning_box = widgetWarningBox(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*4+self.sh*2],entries = en)
+		self.warning_box = widgetWarningBox(self,[self.cs*3+self.il+self.ll+self.ls,self.ls*7+self.sh*2],entries = en)
 
 	def sweep_start(self):
 		self.parent.parent.sweep_start('2d')
@@ -915,6 +940,10 @@ class sweeperWidget(gui.QMainWindow):
 	def get_details(self,kind='1d'):
 		if kind=='1d':
 			details = {
+				'dv_loc'       : self.s1d.dv_options.input_location.text(),
+				'dv_name'      : self.s1d.dv_options.input_name.text(),
+				'dv_autosave'  : self.s1d.dv_options.cb_autosave.isChecked(),
+
 				'setting_swept': self.s1d.swept_settings.get_selected_setting(),
 				'settings_read': list(self.s1d.recorded_settings.list_to_be_logged.items),
 				'start'        : self.s1d.swept_settings.input_start.getValue(),
@@ -934,6 +963,10 @@ class sweeperWidget(gui.QMainWindow):
 			#print(type(details['custom_name']))
 		else:
 			details = {
+				'dv_loc'       : self.s2d.dv_options.input_location.text(),
+				'dv_name'      : self.s2d.dv_options.input_name.text(),
+				'dv_autosave'  : self.s2d.dv_options.cb_autosave.isChecked(),
+
 				'settings_read':list(self.s2d.recorded_settings.list_to_be_logged.items),
 				'fast_swept'   :self.s2d.sweep_fast.get_selected_setting(),
 				'slow_swept'   :self.s2d.sweep_slow.get_selected_setting(),
