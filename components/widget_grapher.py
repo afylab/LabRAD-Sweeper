@@ -6,7 +6,6 @@ from math import e,pi,floor
 
 from widgets              import queryButton,simpleText,checkBox,simpleDropdown,rotText,textInput,simpleLabel,verticalLabel
 from colormaps            import maps
-from logger               import dataLogger,datasetDetails
 from widget_comment_box   import commentBoxWidget
 from widget_parameter_box import parameterBoxWidget
 from data_vault_handler   import DataSet
@@ -811,9 +810,7 @@ class customMapWidget(gui.QDialog):
 
 class grapherWidget(gui.QMainWindow):
     def __init__(self,password):
-        super(grapherWidget,self).__init__()        
-        global log
-        log = dataLogger(password)
+        super(grapherWidget,self).__init__()
         self.doUI()
     def doUI(self):
         self.tabs = gui.QTabWidget(self)
