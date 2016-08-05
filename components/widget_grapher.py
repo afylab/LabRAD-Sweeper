@@ -160,6 +160,7 @@ class colorplotInstance(gui.QWidget):
         self.cBarGl.ci.layout.setSpacing(0)
 
         self.cBarView = self.cBarGl.addViewBox(enableMouse=False)
+        self.cBarView.setMenuEnabled(False)
         self.cBarImg  = pg.ImageItem(border='w')
         self.cBarView.addItem(self.cBarImg)
         self.cBarView.setRange(core.QRectF(0,0,1,ColorBarResolution))
