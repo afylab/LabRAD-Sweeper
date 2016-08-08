@@ -39,7 +39,8 @@ class DataSet(object):
 	def close_dataset(self):
 		self.dataset_open = False
 		self.ctx_expired  = True
-		CONNECTION_HANDLER.expire_context(self.ctx)
+		self.connection.disconnect()
+		print("LabRAD connection closed for DataSet object with name ({name})".format(name=self.name))
 
 	def add_comments(self,comments,write=False):
 		if not comments:comments = []

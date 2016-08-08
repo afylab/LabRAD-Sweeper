@@ -41,6 +41,16 @@ class interface(gui.QMainWindow):
         self.time = time.time()
         self.last_error_check = self.time
 
+    def closeEvent(self,event):
+        print("Stopping main LabRAD connection...")
+        self.connection.disconnect()
+        print("Main LabRAD connection stopped.")
+        print("Stopping grapher connections...")
+        for ID in self.grapher.IDs:
+        	if self.grapher.sweepers[ID].status != 'CANCELLED':self.grapher.sweepers[ID].data_set.close_dataset()
+        print("Done.")
+        self.grapher.close()
+
     def timer_event(self):
         """This function is called each time the internal timer times out.
            It updates everything that needs to be updated on a timer.

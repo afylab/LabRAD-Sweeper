@@ -613,11 +613,12 @@ class sweepInstance(gui.QMainWindow):
             self.status = 'running'
             self.update_tab_name()
 
-    def cancel(self):
-        if not self.checkbox_cancel.isChecked():
+    def cancel(self,force_cancel=False):
+        if (not self.checkbox_cancel.isChecked()) and (not (force_cancel is True)):
             return
         else:
             self.status='CANCELLED'
+            self.data_set.close_dataset() # close the LabRAD connection
             self.parent.IDs.remove(self.ID)
             self.parent.sweepers.pop(self.ID)
             #remove tab
