@@ -902,13 +902,19 @@ class sweeperWidget(gui.QMainWindow):
 ##            'registry',
 ##            'data_vault',
 ##            ]
-		
+
+		active_servers = []
+
 		for server in str(self.parent.connection.servers).splitlines():
 			if server not in excluded_servers:
 				
 				try:
 					settings = self.parent.connection.servers[server].settings
 					devices  = [dev[1] for dev in self.parent.connection.servers[server].list_devices()]
+
+					if len(devices) == 0: # skip deviceless servers
+						print("Device server {server} has no active devices, and will be ignored".format(server=server))
+						continue
 
 					self.contents.update([[
 						server,{dev:str(settings).splitlines() for dev in devices}
@@ -919,15 +925,24 @@ class sweeperWidget(gui.QMainWindow):
 					self.contents_recordable.update([[
 						server,{dev:[setting for setting in str(settings).splitlines() if get_is_recordable(self.parent.connection.servers[server].settings[setting])] for dev in devices}
 						]])
+					active_servers.append(server)
 				except:
-					print("The following server is not a properly functioning device server and should be fixed or added to excluded servers: ",server)
-					
-		self.tabs = gui.QTabWidget(self)
-		self.setCentralWidget(self.tabs)
-		self.s1d=sweep1D(self)
-		self.s2d=sweep2D(self)
-		self.tabs.addTab(self.s1d,"1-D sweep")
-		self.tabs.addTab(self.s2d,"2-D sweep")
+					print("Server {server} is not a functioning device server. It should either be fixed, or added to the excluded_servers list.".format(server=server))
+
+		if len(active_servers) == 0:
+			print("Did not find any device servers with active devices. Please make sure that there are valid device servers running (with devices active,) then restart the sweeper.")
+			self.found_servers = False
+		else:
+			print("Found active device servers: {active_servers}".format(active_servers=active_servers))
+			self.found_servers = True
+
+		if self.found_servers:
+			self.tabs = gui.QTabWidget(self)
+			self.setCentralWidget(self.tabs)
+			self.s1d=sweep1D(self)
+			self.s2d=sweep2D(self)
+			self.tabs.addTab(self.s1d,"1-D sweep")
+			self.tabs.addTab(self.s2d,"2-D sweep")
 
 		#[!!!!] test label        #[!!!!] rot test
 		#self.rl1 = rotText(self,"test #1",[128,128,128,23],0)

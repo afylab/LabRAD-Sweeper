@@ -41,6 +41,11 @@ class interface(gui.QMainWindow):
         self.time = time.time()
         self.last_error_check = self.time
 
+        # If we found no active device servers (with active devices) then we close the program
+        # if self.cen.found_servers is False:
+        #     self.close()
+        #     self.grapher.close()
+
     def closeEvent(self,event):
         print("Stopping main LabRAD connection...")
         self.connection.disconnect()
@@ -179,12 +184,21 @@ class interface(gui.QMainWindow):
         self.menus['program'].addAction(action_grapher)
 
         self.cen = sweeperWidget(self,False)
-        self.setCentralWidget(self.cen)
 
-        self.grapher = grapherWidget(self.password)
-        self.grapher.setWindowTitle("Grapher")
+        if self.cen.found_servers is True:
+            self.setCentralWidget(self.cen)
 
-        self.show()
+            self.grapher = grapherWidget(self.password)
+            self.grapher.setWindowTitle("Grapher")
+            
+            self.show()
+
+        else:
+            self.connection.disconnect()
+            sys.exit()
+
+        
+
 
     def open_grapher(self):
         self.grapher.show()
